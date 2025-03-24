@@ -1,1 +1,1 @@
-# smell-jena
+# Smell Project - Antonie
