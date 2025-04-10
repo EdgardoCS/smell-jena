@@ -11,47 +11,75 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 
-def count_inside(area, area_range, body_segment):
+def count_whole(data, rectangle_range):
     """
-    Takes a rectangle from area_range and count how many points are inside that surface,
-    points are taken from area, which has the data
-    :param area: surface area to extend the search
-    :param area_range: set of points of smell map
-    :param body_segment: name of each body segment
-    :return: points to be saved
-    """
-    match = []
-    unmatch = []
 
-    target_data = area
-    x = area_range[0]
-    y = area_range[1]
-    w = area_range[2]
-    h = area_range[3]
+    :param data:
+    :param rectangle_range:
+    :return:
+    """
+    f = []
+    b = []
+
+    target_data = data
+
+    x = rectangle_range['x']
+    y = rectangle_range['y']
+    w = rectangle_range['w']
+    h = rectangle_range['h']
 
     for i in range(0, len(target_data)):
         if x <= target_data.iloc[i, 3] < x + w and y <= target_data.iloc[i, 2] < y + h:
-            match.append([int(target_data.iloc[i, 3]), int(target_data.iloc[i, 2])])
-        else:
-            unmatch.append([int(target_data.iloc[i, 3]), int(target_data.iloc[i, 2])])
+            f.append([int(target_data.iloc[i, 3]), int(target_data.iloc[i, 2])])
 
-    match = np.array(match)
-    unmatch = np.array(unmatch)
+    for i in range(0, len(target_data)):
+        b.append([int(target_data.iloc[i, 3]), int(target_data.iloc[i, 2])])
 
-    # count_match = len(match)
-    # count_unmatch = len(unmatch)
-    # print("body segment", body_segment, "has", count_match, "points from a total of", count_unmatch + count_match,
-    #       "points")
+    f = len(f)
+    b = len(b)
 
-    return match
+    b = abs(f - b)
+    return f, b
+
+
+def count_inside(data, rectangle_range):
+    """
+
+    :param data:
+    :param rectangle_range:
+    :return:
+    """
+    f = []
+    b = []
+
+    target_data = data
+
+    x = rectangle_range.loc[rectangle_range['location'] == "front", 'x'].to_numpy()
+    y = rectangle_range.loc[rectangle_range['location'] == "front", 'y'].to_numpy()
+    w = rectangle_range.loc[rectangle_range['location'] == "front", 'w'].to_numpy()
+    h = rectangle_range.loc[rectangle_range['location'] == "front", 'h'].to_numpy()
+
+    for i in range(0, len(target_data)):
+        if x <= target_data.iloc[i, 3] < x + w and y <= target_data.iloc[i, 2] < y + h:
+            f.append([int(target_data.iloc[i, 3]), int(target_data.iloc[i, 2])])
+
+    x = rectangle_range.loc[rectangle_range['location'] == "back", 'x'].to_numpy()
+    y = rectangle_range.loc[rectangle_range['location'] == "back", 'y'].to_numpy()
+    w = rectangle_range.loc[rectangle_range['location'] == "back", 'w'].to_numpy()
+    h = rectangle_range.loc[rectangle_range['location'] == "back", 'h'].to_numpy()
+
+    for i in range(0, len(target_data)):
+        if x <= target_data.iloc[i, 3] < x + w and y <= target_data.iloc[i, 2] < y + h:
+            b.append([int(target_data.iloc[i, 3]), int(target_data.iloc[i, 2])])
+
+    return f, b
 
 
 if __name__ == "__main__":
 
-
-    #TODO: count how many points are in total to calculate percentages
-    #TODO: draw armpits on image and set segment
-    #TODO: use bubbles or percentage in image to plot
+    # TODO: Normalize for each country
+    # TODO: count how many points are in total to calculate percentages
+    # TODO: use bubbles or percentage in image to plot
 
     # Load data from questionnaire
     questionnaire = pd.read_excel("source/data/smell_behavior_sociodemographics.xlsx")
@@ -73,63 +101,63 @@ if __name__ == "__main__":
     other_count = other.groupby("id").size().reset_index(name='count')
     other_agg = pd.merge(other[["country", "id"]], other_count, on="id").drop_duplicates()
 
-    df = other
-    # df = other.loc[other["country"] == "HKG"]  # to choose a particular country
+    countries = self_agg["country"].unique()
 
-    # Load image
+    # Load body segments and image
+    segments = pd.read_excel("source/data/body_segments.xlsx")
     map_img = mpimg.imread('source/img/humanbody_clear.png')  # change path to image path
 
-    # Plot image
-    hmax = sns.scatterplot(x="other_x", y="other_y", data=df, alpha=0.00, zorder=2)
-    hmax.imshow(map_img)
-    hmax.invert_yaxis()
-    hmax.invert_xaxis()
-
-    hmax.set_xlim(hmax.get_xlim()[::-1])
-    hmax.set_ylim(hmax.get_ylim()[::-1])
+    df = other
     # plt.savefig("source/output/" + "body_others.png", dpi=300, format="png")
 
-    # Load body segments
-    segments = pd.read_excel("source/data/body_segments.xlsx")
-
-    scatterPoints_front = []
-    scatterPoints_back = []
-
-    front_points = 0
-    back_points = 0
-
-    # Z
-
-    print("Sorting data...")
-    for i in range(0, len(segments)):
-        included = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-                    14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
-        if segments.iloc[i]["id_segment"] in included:
-            rectangleRange = [segments.iloc[i]['x'], segments.iloc[i]['y'],
-                              segments.iloc[i]['w'], segments.iloc[i]['h']]
-            matchedPoints = count_inside(df, rectangleRange, segments.iloc[i]["segment"])
-            if i < 13:
-                scatterPoints_front.append(matchedPoints)
-            elif i > 12:
-                scatterPoints_back.append(matchedPoints)
-
-    print("Ready to plot")
-
     colors = ["#FF6B6B", "#FFA94D", "#FFD43B", "#69DB7C", "#38D9A9", "#4DABF7", "#5C7CFA",
-              "#9775FA", "#DA77F2", "#F783AC", "#ADB5BD", "#343A40", "#FFC9E3"]
+              "#9775FA", "#DA77F2", "#F783AC", "#ADB5BD", "#343A40", "#FFC9E3", "#B2F2BB"]
 
-    for i, segment in enumerate(scatterPoints_front):
-        x1 = scatterPoints_front[i][:, 0]
-        y1 = scatterPoints_front[i][:, 1]
+    segments_names = ["hair", "mouth", "neck", "chest", "r_armpit", "r_hand", "l_armpit",
+                      "l_hand", "pelvis", "r_knee", "r_foot", "l_knee", "l_foot"]
+    whole_body = ["front_side", "back_side"]
+    segments_location = ["front", "back"]
 
-        x2 = scatterPoints_back[i][:, 0]
-        y2 = scatterPoints_back[i][:, 1]
+    country_front = []
+    country_back = []
+    country_whole_front = []
+    count_whole_back = []
 
-        sns.scatterplot(x=x1, y=y1, alpha=0.5, color=colors[i])
-        sns.scatterplot(x=x2, y=y2, alpha=0.5, color=colors[i])
+    for i, country in enumerate(countries):
+        df = other.loc[other["country"] == country]
 
-    plt.show()
-#
-#   plt.axis("on")
-#   plt.savefig("source/output/" + "body_others_painted.png", dpi=300, format="png")
-#   print("Body odor perceived from body of others")
+        if i < 2:
+
+            print("Sorting data...", country)
+            for segment in whole_body:
+                rectangle = segments.set_index('segment').loc[segment, ['location', 'x', 'y', 'w', 'h']]
+                whole_front, whole_back = count_whole(df, rectangle)
+
+            for segment in segments_names:
+                rectangle = segments.set_index('segment').loc[segment, ['location', 'x', 'y', 'w', 'h']]
+                front_points, back_points = count_inside(df, rectangle)
+
+                front_points = len(front_points)
+                back_points = len(back_points)
+                f_percentage = front_points * 100 / whole_front
+                b_percentage = back_points * 100 / whole_back
+
+                new_data = {
+                    "frontal_percentage": [f_percentage],
+                    "back_percentage": [b_percentage]
+                }
+                new_df = pd.DataFrame(new_data)
+
+                # segments = segments.reset_index()
+
+                segments.loc[
+                    (segments['segment'] == segment) & (segments['location'] == "front"),
+                    ['percentage']] = [f_percentage]
+
+                segments.loc[
+                    (segments['segment'] == segment) & (segments['location'] == "back"),
+                    ['percentage']] = [b_percentage]
+
+        new_segments = segments[segments["percentage"].notnull()]
+        print(new_segments)
+
