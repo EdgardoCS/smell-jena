@@ -129,6 +129,7 @@ if __name__ == "__main__":
     segments_location = ["front", "back"]
 
     fig, axes = plt.subplots(nrows=2, ncols=9)
+    # fig, axes = plt.subplots(1, 3)
     axes = axes.flatten()
 
     for i, country in enumerate(countries):
@@ -150,8 +151,6 @@ if __name__ == "__main__":
             front_points = len(front_points)
             back_points = len(back_points)
 
-            # print(front_points)
-            # print(back_points)
             f_percentage = truncate(front_points * 100 / whole_front, 1)
             b_percentage = truncate(back_points * 100 / whole_back, 1)
 
@@ -170,12 +169,11 @@ if __name__ == "__main__":
             segments.loc[
                 (segments['segment'] == segment) & (segments['location'] == "back"),
                 ['percentage']] = [b_percentage]
-
         new_segments = segments[segments["percentage"].notnull()]
 
-        hmax = sns.scatterplot(data=new_segments, x="xc", y="yc", size="percentage", sizes=(300, 400), legend=False,
+        hmax = sns.scatterplot(data=new_segments, x="xc", y="yc", size="percentage", sizes=(250, 1000), legend=False,
                                ax=axes[i], alpha=0.5)
-        for line in range(0, 37):
+        for line in range(0, 38):
             try:
                 hmax.text(
                     new_segments["xc"][line] + 0.1,
