@@ -59,9 +59,31 @@ def plot_sex(df1, df2, df3, names, image):
                 ['percentage']] = [b_percentage]
 
         new_segments = df3[df3["percentage"].notnull()]
+        new_segments.loc[:, 'colors'] = ["#00DBFF"] * new_segments.shape[0]
+        # print(new_segments)
 
-        hmax = sns.scatterplot(data=new_segments, x="xc", y="yc", size="percentage", sizes=(250, 1000),
-                               legend=False, ax=axes[i], alpha=0.5)
+        new_segments.loc[
+            (new_segments['percentage'] == new_segments.iloc[:len(names)]["percentage"].max()),
+            ['colors']] = ["#FF2400"]
+        new_segments.loc[
+            (new_segments['percentage'] == new_segments.iloc[:len(names)]["percentage"].min()),
+            ['colors']] = ["#FFD700"]
+        new_segments.loc[
+            (new_segments['percentage'] == new_segments.iloc[len(names):]["percentage"].max()),
+            ['colors']] = ["#FF2400"]
+        new_segments.loc[
+            (new_segments['percentage'] == new_segments.iloc[len(names):]["percentage"].min()),
+            ['colors']] = ["#FFD700"]
+
+        hmax = sns.scatterplot(data=new_segments,
+                               x="xc",
+                               y="yc",
+                               size="percentage",
+                               sizes=(250, 1000),
+                               legend=False,
+                               ax=axes[i],
+                               hue="colors",
+                               alpha=0.5)
 
         for line in range(0, 38):
             try:
@@ -83,8 +105,6 @@ def plot_sex(df1, df2, df3, names, image):
 
         axes[i].axis("off")
         axes[i].set_title(titles[i])
-    # plt.subplots_adjust(wspace=0.0)
-    # plt.tight_layout()
     plt.show()
 
 
@@ -288,4 +308,4 @@ if __name__ == "__main__":
                       "l_hand", "pelvis", "r_knee", "r_foot", "l_knee", "l_foot"]
 
     # plot_countries(self, other, segments, segments_names, map_img)
-    plot_sex(self_sex, other_sex, segments, segments_names, map_img)
+    # plot_sex(self_sex, other_sex, segments, segments_names, map_img)
