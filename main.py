@@ -15,13 +15,16 @@ from matplotlib.pyplot import tight_layout
 
 def plot_sex(df1, df2, df3, names, image):
     """
-
-    :param df1:
-    :param df2:
-    :param df3:
-    :param names:
-    :param image:
-    :return:
+    Take both self and others data and plot the results of how many points are within a Region of Interest (ROI).
+    The results are plotted in terms of percentages and are separated by gender (female/male) and type (self/others)
+    It also takes the segments DataFrame and add new columns, such as "points" (number of points counted on each
+    segment), "gender" and "type" to further analysis.
+    :param df1: "self" data
+    :param df2: "others" data
+    :param df3: segments as DataFrame
+    :param names: name of segments
+    :param image: body silhouette to plot
+    :return: Nothing
     """
 
     fig, axes = plt.subplots(nrows=2, ncols=2)
@@ -34,7 +37,12 @@ def plot_sex(df1, df2, df3, names, image):
 
     dfs = [df_self1, df_self2, df_other1, df_other2]
     titles = ["Females (Self)", "Males (Self)", "Females (Others)", "Males (Others)"]
+
+    data_sorted = pd.DataFrame()
+
     for i, sex in enumerate(dfs):
+
+        print("Working on", titles[i])
 
         rectangle = df3.set_index('segment').loc["front_side", ['location', 'x', 'y', 'w', 'h']]
         whole_front, whole_back = count_whole(sex, rectangle)
@@ -52,15 +60,54 @@ def plot_sex(df1, df2, df3, names, image):
 
             df3.loc[
                 (df3['segment'] == segment) & (df3['location'] == "front"),
+                ['points']] = [front_points]
+
+            df3.loc[
+                (df3['segment'] == segment) & (df3['location'] == "back"),
+                ['points']] = [back_points]
+
+            df3.loc[
+                (df3['segment'] == segment) & (df3['location'] == "front"),
                 ['percentage']] = [f_percentage]
 
             df3.loc[
                 (df3['segment'] == segment) & (df3['location'] == "back"),
                 ['percentage']] = [b_percentage]
 
+            if i == 0:
+                df3.loc[
+                    (df3['segment'] == segment),
+                    ['gender']] = ["female"]
+                df3.loc[
+                    (df3['segment'] == segment),
+                    ['type']] = ["self"]
+            elif i == 1:
+                df3.loc[
+                    (df3['segment'] == segment),
+                    ['gender']] = ["male"]
+                df3.loc[
+                    (df3['segment'] == segment),
+                    ['type']] = ["self"]
+
+            elif i == 2:
+                df3.loc[
+                    (df3['segment'] == segment),
+                    ['gender']] = ["female"]
+                df3.loc[
+                    (df3['segment'] == segment),
+                    ['type']] = ["other"]
+            elif i == 3:
+                df3.loc[
+                    (df3['segment'] == segment),
+                    ['gender']] = ["male"]
+                df3.loc[
+                    (df3['segment'] == segment),
+                    ['type']] = ["other"]
+
         new_segments = df3[df3["percentage"].notnull()]
+        data_sorted = pd.concat([data_sorted, new_segments], ignore_index=True)
+
         new_segments.loc[:, 'colors'] = ["#00DBFF"] * new_segments.shape[0]
-        # print(new_segments)
 
         new_segments.loc[
             (new_segments['percentage'] == new_segments.iloc[:len(names)]["percentage"].max()),
@@ -105,20 +152,22 @@ def plot_sex(df1, df2, df3, names, image):
 
         axes[i].axis("off")
         axes[i].set_title(titles[i])
+
     plt.show()
+    data_sorted.to_excel("source/output/data_sorted.xlsx")
 
 
 def plot_countries(df1, df2, df3, names, image):
     """
+    Take either self or others data and plot the results of each country regarding the zones they like to sniff or
+    be sniffed. Plotted as percentages (ROI vs Whole)
 
-    :param df1:
-    :param df2:
-    :param df3:
-    :param names:
-    :param body:
-    :param location:
-    :param image:
-    :return:
+    :param df1: "self" data
+    :param df2: "others" data
+    :param df3: segments as DataFrame
+    :param names: name of segments
+    :param image: body silhouette to plot
+    :return: Nothing
     """
 
     # Get countries names
