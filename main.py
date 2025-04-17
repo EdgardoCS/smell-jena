@@ -358,3 +358,7 @@ if __name__ == "__main__":
 
     # plot_countries(self, other, segments, segments_names, map_img)
     # plot_sex(self_sex, other_sex, segments, segments_names, map_img)
+
+
+# https://pingouin-stats.org/build/html/generated/pingouin.rm_anova.html
+# https://pingouin-stats.org/build/html/generated/pingouin.pairwise_tests.html
