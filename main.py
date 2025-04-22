@@ -13,6 +13,98 @@ import matplotlib.image as mpimg
 from matplotlib.pyplot import tight_layout
 
 
+def sort_to_export(df1, df2, df3, names):
+    """
+
+    :param df1:
+    :param df2:
+    :param df3:
+    :param names:
+    :return:
+    """
+    df_self1 = df1[df1["gender"] != "male"]
+    df_self2 = df1[df1["gender"] != "female"]
+    df_other1 = df2[df2["gender"] != "male"]
+    df_other2 = df2[df2["gender"] != "female"]
+
+    dfs = [df_self1, df_self2, df_other1, df_other2]
+    titles = ["Females (Self)", "Males (Self)", "Females (Others)", "Males (Others)"]
+
+    data_sorted = pd.DataFrame()
+
+    for i, sex in enumerate(dfs):
+
+        print("Working on", titles[i])
+
+        for segment in names:
+            print("Working on", segment)
+            rectangle = df3.set_index('segment').loc[segment, ['location', 'x', 'y', 'w', 'h']]
+
+            x1 = rectangle.loc[rectangle['location'] == "front", 'x'].to_numpy()
+            y1 = rectangle.loc[rectangle['location'] == "front", 'y'].to_numpy()
+            w1 = rectangle.loc[rectangle['location'] == "front", 'w'].to_numpy()
+            h1 = rectangle.loc[rectangle['location'] == "front", 'h'].to_numpy()
+
+            x2 = rectangle.loc[rectangle['location'] == "back", 'x'].to_numpy()
+            y2 = rectangle.loc[rectangle['location'] == "back", 'y'].to_numpy()
+            w2 = rectangle.loc[rectangle['location'] == "back", 'w'].to_numpy()
+            h2 = rectangle.loc[rectangle['location'] == "back", 'h'].to_numpy()
+
+            for j in range(0, len(sex)):
+                if "(Self)" in titles[i]:
+                    if x1 <= sex.iloc[j, 3] < x1 + w1 and y1 <= sex.iloc[j, 2] < y1 + h1:
+                        sex.loc[(sex['self_x'] == sex.iloc[j, 3]) & (sex['self_y'] == sex.iloc[j, 2]), ['segment']] = [
+                            segment]
+                        sex.loc[(sex['self_x'] == sex.iloc[j, 3]) & (sex['self_y'] == sex.iloc[j, 2]), ['location']] = [
+                            "front"]
+                        sex.loc[(sex['self_x'] == sex.iloc[j, 3]) & (sex['self_y'] == sex.iloc[j, 2]), ['type']] = [
+                            "self"]
+
+                    if x2 <= sex.iloc[j, 3] < x2 + w2 and y2 <= sex.iloc[j, 2] < y2 + h2:
+                        sex.loc[(sex['self_x'] == sex.iloc[j, 3]) & (sex['self_y'] == sex.iloc[j, 2]), ['segment']] = [
+                            segment]
+                        sex.loc[(sex['self_x'] == sex.iloc[j, 3]) & (sex['self_y'] == sex.iloc[j, 2]), ['type']] = [
+                            "self"]
+                        sex.loc[(sex['self_x'] == sex.iloc[j, 3]) & (sex['self_y'] == sex.iloc[j, 2]), ['location']] = [
+                            "back"]
+
+                elif "(Others)" in titles[i]:
+                    if x1 <= sex.iloc[j, 3] < x1 + w1 and y1 <= sex.iloc[j, 2] < y1 + h1:
+                        sex.loc[
+                            (sex['other_x'] == sex.iloc[j, 3]) & (sex['other_y'] == sex.iloc[j, 2]), ['segment']] = [
+                            segment]
+                        sex.loc[(sex['other_x'] == sex.iloc[j, 3]) & (sex['other_y'] == sex.iloc[j, 2]), ['type']] = [
+                            "other"]
+                        sex.loc[
+                            (sex['other_x'] == sex.iloc[j, 3]) & (sex['other_y'] == sex.iloc[j, 2]), ['location']] = [
+                            "front"]
+
+                    if x2 <= sex.iloc[j, 3] < x2 + w2 and y2 <= sex.iloc[j, 2] < y2 + h2:
+                        sex.loc[
+                            (sex['other_x'] == sex.iloc[j, 3]) & (sex['other_y'] == sex.iloc[j, 2]), ['segment']] = [
+                            segment]
+                        sex.loc[(sex['other_x'] == sex.iloc[j, 3]) & (sex['other_y'] == sex.iloc[j, 2]), ['type']] = [
+                            "other"]
+                        sex.loc[
+                            (sex['other_x'] == sex.iloc[j, 3]) & (sex['other_y'] == sex.iloc[j, 2]), ['location']] = [
+                            "back"]
+
+        duplicate_counts = (
+            sex.groupby(['id', 'segment', 'location'])
+            .size()
+            .reset_index(name='points')
+        )
+
+        info_df = sex[['id', 'gender', 'segment', 'location', 'type']].drop_duplicates()
+
+        result_df = pd.merge(duplicate_counts, info_df, on=['id', 'segment', 'location'], how='left')
+        result_df = result_df[['id', 'points', 'gender', 'segment', 'location', 'type']]
+
+        data_sorted = pd.concat([data_sorted, result_df], ignore_index=True)
+
+    data_sorted.to_excel("source/output/data_sorted_all.xlsx")
+
+
 def plot_sex(df1, df2, df3, names, image):
     """
     Take both self and others data and plot the results of how many points are within a Region of Interest (ROI).
@@ -358,7 +450,7 @@ if __name__ == "__main__":
 
     # plot_countries(self, other, segments, segments_names, map_img)
     # plot_sex(self_sex, other_sex, segments, segments_names, map_img)
-
+    sort_to_export(self_sex, other_sex, segments, segments_names)
 
 # https://pingouin-stats.org/build/html/generated/pingouin.rm_anova.html
 # https://pingouin-stats.org/build/html/generated/pingouin.pairwise_tests.html
