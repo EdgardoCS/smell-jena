@@ -49,6 +49,14 @@ def sort_to_export(df1, df2, df3, names):
             y2 = rectangle.loc[rectangle['location'] == "back", 'y'].to_numpy()
             w2 = rectangle.loc[rectangle['location'] == "back", 'w'].to_numpy()
             h2 = rectangle.loc[rectangle['location'] == "back", 'h'].to_numpy()
+            if segment == "r_armpit" or segment == "l_armpit":
+                segment = "armpit"
+            if segment == "r_hand" or segment == "l_hand":
+                segment = "hand"
+            if segment == "r_knee" or segment == "l_knee":
+                segment = "knee"
+            if segment == "r_foot" or segment == "l_foot":
+                segment = "feet"
 
             for j in range(0, len(sex)):
                 if "(Self)" in titles[i]:
@@ -102,7 +110,7 @@ def sort_to_export(df1, df2, df3, names):
 
         data_sorted = pd.concat([data_sorted, result_df], ignore_index=True)
 
-    data_sorted.to_excel("source/output/data_sorted_all.xlsx")
+    data_sorted.to_excel("source/output/data_sorted_all(1).xlsx")
 
 
 def plot_sex(df1, df2, df3, names, image):
@@ -196,28 +204,29 @@ def plot_sex(df1, df2, df3, names, image):
                     (df3['segment'] == segment),
                     ['type']] = ["other"]
 
-        new_segments = df3[df3["percentage"].notnull()]
+        new_segments = df3[df3["points"].notnull()]
+        new_segments = new_segments.astype({"points": int})
         data_sorted = pd.concat([data_sorted, new_segments], ignore_index=True)
 
         new_segments.loc[:, 'colors'] = ["#00DBFF"] * new_segments.shape[0]
 
         new_segments.loc[
-            (new_segments['percentage'] == new_segments.iloc[:len(names)]["percentage"].max()),
+            (new_segments['points'] == new_segments.iloc[:len(names)]["points"].max()),
             ['colors']] = ["#FF2400"]
         new_segments.loc[
-            (new_segments['percentage'] == new_segments.iloc[:len(names)]["percentage"].min()),
+            (new_segments['points'] == new_segments.iloc[:len(names)]["points"].min()),
             ['colors']] = ["#FFD700"]
         new_segments.loc[
-            (new_segments['percentage'] == new_segments.iloc[len(names):]["percentage"].max()),
+            (new_segments['points'] == new_segments.iloc[len(names):]["points"].max()),
             ['colors']] = ["#FF2400"]
         new_segments.loc[
-            (new_segments['percentage'] == new_segments.iloc[len(names):]["percentage"].min()),
+            (new_segments['points'] == new_segments.iloc[len(names):]["points"].min()),
             ['colors']] = ["#FFD700"]
 
         hmax = sns.scatterplot(data=new_segments,
                                x="xc",
                                y="yc",
-                               size="percentage",
+                               size="points",
                                sizes=(250, 1000),
                                legend=False,
                                ax=axes[i],
@@ -227,9 +236,9 @@ def plot_sex(df1, df2, df3, names, image):
         for line in range(0, 38):
             try:
                 hmax.text(
-                    new_segments["xc"][line] + 0.1,
-                    new_segments["yc"][line] + 0.2,
-                    new_segments["percentage"][line],
+                    new_segments["xc"][line],
+                    new_segments["yc"][line],
+                    new_segments["points"][line],
                     ha="left",
                     weight="bold"
                 )
@@ -246,7 +255,7 @@ def plot_sex(df1, df2, df3, names, image):
         axes[i].set_title(titles[i])
 
     plt.show()
-    data_sorted.to_excel("source/output/data_sorted.xlsx")
+    # data_sorted.to_excel("source/output/data_sorted.xlsx")
 
 
 def plot_countries(df1, df2, df3, names, image):
@@ -282,16 +291,11 @@ def plot_countries(df1, df2, df3, names, image):
                 rectangle = df3.set_index('segment').loc[segment, ['location', 'x', 'y', 'w', 'h']]
                 front_points, back_points = count_inside(df_target, rectangle)
 
-                front_points = len(front_points)
-                back_points = len(back_points)
+                front_points = int(len(front_points))
+                back_points = int(len(back_points))
 
                 f_percentage = truncate(front_points * 100 / whole_front, 1)
                 b_percentage = truncate(back_points * 100 / whole_back, 1)
-
-                new_data = {
-                    "frontal_percentage": [f_percentage],
-                    "back_percentage": [b_percentage]
-                }
 
                 df3.loc[
                     (df3['segment'] == segment) & (df3['location'] == "front"),
@@ -300,7 +304,9 @@ def plot_countries(df1, df2, df3, names, image):
                 df3.loc[
                     (df3['segment'] == segment) & (df3['location'] == "back"),
                     ['percentage']] = [b_percentage]
+
             new_segments = df3[df3["percentage"].notnull()]
+            new_segments = new_segments.astype({"percentage": int})
 
             hmax = sns.scatterplot(data=new_segments, x="xc", y="yc", size="percentage", sizes=(250, 1000),
                                    legend=False,
@@ -331,6 +337,7 @@ def plot_countries(df1, df2, df3, names, image):
         elif f == 1:
             fig.suptitle('OTHERS', fontsize=16)
         plt.show()
+        print("--------------------------------------------------")
 
 
 def truncate(number, digits) -> float:
@@ -447,10 +454,9 @@ if __name__ == "__main__":
     # Names of all the segments of interest
     segments_names = ["hair", "mouth", "neck", "chest", "r_armpit", "r_hand", "l_armpit",
                       "l_hand", "pelvis", "r_knee", "r_foot", "l_knee", "l_foot"]
-
     # plot_countries(self, other, segments, segments_names, map_img)
-    # plot_sex(self_sex, other_sex, segments, segments_names, map_img)
-    sort_to_export(self_sex, other_sex, segments, segments_names)
+    plot_sex(self_sex, other_sex, segments, segments_names, map_img)
+    # sort_to_export(self_sex, other_sex, segments, segments_names)
 
 # https://pingouin-stats.org/build/html/generated/pingouin.rm_anova.html
 # https://pingouin-stats.org/build/html/generated/pingouin.pairwise_tests.html

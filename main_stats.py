@@ -7,57 +7,58 @@ import pandas as pd
 import seaborn as sns
 import pingouin as pg
 import matplotlib.pyplot as plt
-from statsmodels.formula.api import ols
+
+import scikit_posthocs as sp
 from statsmodels.stats.anova import anova_lm
+from statsmodels.formula.api import ols, mixedlm
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
 
 pd.options.mode.chained_assignment = None
 
-input_data = "source/output/data_sorted_all.xlsx"
+input_data = "source/output/data_sorted_all(1).xlsx"
 data = pd.read_excel(input_data)
 
-data_front = data[data["location"] == "front"]
-data_back = data[data["location"] == "back"]
+data_front = data[(data['location'] == 'front')]
 
-df = data_front
-
-# f, axes = plt.subplots(1, 2)
-# sns.boxplot(data_front, x="gender", y="points", hue="type", fill=False, ax=axes[0])
-# sns.boxplot(data_back, x="gender", y="points", hue="type", fill=False, ax=axes[1])
-
-# df['group'] = df['gender'] + '_' + df['segment']
-
-formula = 'points ~ C(gender) + C(type) + C(gender):C(type)'
-model = ols(formula, data_front).fit()
-aov_table = anova_lm(model, typ=2)
-print(aov_table)
-
-aov = pg.anova(df, dv="points", between=["gender", "type"], detailed=True)
-print("--------------------------------- ANOVA --------------------------------------")
-print(aov)
-
-mixed_anova = pg.mixed_anova(dv='points',
-                             within='type',
-                             between='gender',
-                             subject='id',
-                             data=df)
-print("--------------------------- MIXEL-MODEL ANOVA --------------------------------")
-print(mixed_anova)
-
-front_df = data[
+target1 = data[
     (data['location'] == 'front') &
-    (data['gender'] == 'male') &
-    (data['type'].isin(['self', 'other']))
+    (data['type'] == 'self') &
+    (data['gender'].isin(['female', 'male']))
     ].copy()
 
-front_df['group'] = front_df['type'] + '+' + front_df['segment']
+target2 = data[
+    (data['location'] == 'front') &
+    (data['type'] == 'other') &
+    (data['gender'].isin(['female', 'male']))
+    ].copy()
 
-tukey_results = pg.pairwise_tukey(
-    dv='points',
-    between='group',
-    data=front_df
-)
+target3 = data[
+    (data['location'] == 'back') &
+    (data['type'] == 'self') &
+    (data['gender'].isin(['female', 'male']))
+    ].copy()
 
-for index, row in tukey_results.iterrows():
-    if row['A'].split('+')[1] == row['B'].split('+')[1]:
-        print(row)
-        print(row['A'].split('+'), row['B'].split('+'), row['p-tukey'])
+target4 = data[
+    (data['location'] == 'back') &
+    (data['type'] == 'other') &
+    (data['gender'].isin(['female', 'male']))
+    ].copy()
+
+df1 = [target1, target2]
+df2 = [target3, target4]
+
+for d in df1:
+    model = mixedlm("points ~ segment * gender", d, groups=d["id"]).fit()
+    print(model.summary())
+    print("****************************************************************************")
+
+for e in df2:
+    model = mixedlm("points ~ segment * gender", e, groups=e["id"]).fit()
+    print(model.summary())
+    print("****************************************************************************")
+
+three_model = ols("""points ~ C(segment) + C(gender) + C(type) +
+               C(segment):C(gender) + C(segment):C(type) + C(gender):C(type) +
+               C(segment):C(gender):C(type)""", data=data_front).fit()
+anova_lm(three_model, typ=2)
+print(three_model.summary())
