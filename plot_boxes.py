@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     print("Sorting data...")
     for i in range(0, len(segments)):
-        included = [0, 1, 2, 3, 4, 6, 7, 9, 10, 12, 14, 16, 18]
+        included = [0, 2, 3, 4, 6, 7, 9, 10, 12, 14, 16, 18]
         if segments.iloc[i]["id_segment"] in included:
             rectangleRange = [segments.iloc[i]['x'], segments.iloc[i]['y'],
                               segments.iloc[i]['w'], segments.iloc[i]['h']]
@@ -109,7 +109,7 @@ if __name__ == "__main__":
             scatterPoints_front.append(matchedPoints)
 
     for i in range(0, len(segments)):
-        included = [19, 20, 21, 22, 23, 25, 26, 28, 29, 31, 33, 35, 37]
+        included = [19, 21, 22, 23, 25, 26, 28, 29, 31, 33, 35, 37]
         if segments.iloc[i]["id_segment"] in included:
             rectangleRange = [segments.iloc[i]['x'], segments.iloc[i]['y'],
                               segments.iloc[i]['w'], segments.iloc[i]['h']]
@@ -134,5 +134,5 @@ if __name__ == "__main__":
     plt.show()
 #
 #   plt.axis("on")
-#   plt.savefig("source/output/" + "body_others_painted.png", dpi=300, format="png")
+#   plt.savefig("output/" + "body_painted.png", dpi=300, format="png")
 #   print("Body odor perceived from body of others")
